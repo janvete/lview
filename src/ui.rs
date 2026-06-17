@@ -109,19 +109,22 @@ fn draw_log_buffer(f: &mut Frame, viewer: &LogViewer, area: ratatui::layout::Rec
     let title = format!(" {} — {} ", viewer.source, if viewer.live { "LIVE" } else { "PAUSED" });
     let visible = viewer.visible_lines();
 
+    // Compute the viewport offset so the current line stays in view.
+    let current_visible_idx = visible
+        .iter()
+        .position(|(i, _)| *i == viewer.scroll)
+        .unwrap_or(visible.len().saturating_sub(1));
+    let scroll_offset = current_visible_idx
+        .saturating_sub(area.height as usize / 2)
+        .min(visible.len().saturating_sub(1));
+
     let lines: Vec<Line> = visible
         .iter()
-        .enumerate()
-        .map(|(i, line)| {
-            let global_idx = viewer
-                .buffer
-                .iter()
-                .position(|l| std::ptr::eq(l.as_ptr(), line.as_ptr()))
-                .unwrap_or(i);
-            let is_current = global_idx == viewer.scroll;
+        .map(|(global_idx, line)| {
+            let is_current = *global_idx == viewer.scroll;
             let is_match = viewer
                 .search_cursor
-                .map(|c| c == global_idx)
+                .map(|c| c == *global_idx)
                 .unwrap_or(false);
 
             let mut style = Style::default();
@@ -139,7 +142,8 @@ fn draw_log_buffer(f: &mut Frame, viewer: &LogViewer, area: ratatui::layout::Rec
 
     let paragraph = Paragraph::new(Text::from(lines))
         .block(default_block(&title))
-        .wrap(Wrap { trim: false });
+        .wrap(Wrap { trim: false })
+        .scroll((scroll_offset as u16, 0));
     f.render_widget(paragraph, area);
 }
 

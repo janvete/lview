@@ -46,8 +46,13 @@ impl LogViewer {
         }
     }
 
-    pub fn visible_lines(&self) -> Vec<&String> {
-        self.buffer.iter().filter(|l| self.search.matches(l)).collect()
+    /// Returns visible lines together with their original buffer index.
+    pub fn visible_lines(&self) -> Vec<(usize, &String)> {
+        self.buffer
+            .iter()
+            .enumerate()
+            .filter(|(_, l)| self.search.matches(l))
+            .collect()
     }
 
     pub fn push_line(&mut self, line: String) {
