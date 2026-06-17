@@ -52,7 +52,11 @@ impl SshSession {
 
     fn base_cmd(&self) -> Command {
         let mut cmd = Command::new(&self.command);
+        // Non-interactive mode: do not prompt for host keys or passwords.
+        cmd.arg("-o").arg("BatchMode=yes");
+        cmd.arg("-o").arg("StrictHostKeyChecking=accept-new");
         cmd.args(&self.target.args);
+        cmd.stdin(Stdio::null());
         cmd
     }
 

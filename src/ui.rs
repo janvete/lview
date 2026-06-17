@@ -2,7 +2,7 @@ use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Margin},
     style::{Color, Modifier, Style},
     text::{Line, Span, Text},
-    widgets::{Block, Borders, Clear, List, ListItem, Paragraph, Wrap},
+    widgets::{Block, Borders, Clear, List, ListItem, ListState, Paragraph, Wrap},
     Frame,
 };
 
@@ -81,7 +81,8 @@ fn draw_log_list(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
 
     let title = format!(" Logs ({}/{}) ", app.filtered_indices.len(), app.logs.len());
     let list = List::new(items).block(default_block(&title));
-    f.render_widget(list, area);
+    let mut state = ListState::default().with_selected(Some(app.selected_index));
+    f.render_stateful_widget(list, area, &mut state);
 }
 
 fn draw_preview(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
