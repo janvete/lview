@@ -74,9 +74,10 @@ fn main() -> io::Result<()> {
     let session = SshSession::new(config.ssh_command.clone(), target);
 
     let rt = Runtime::new()?;
+    let runtime_handle = rt.handle().clone();
 
     // Run discovery before entering TUI
-    let mut app = App::new(session, config);
+    let mut app = App::new(session, config, runtime_handle);
     rt.block_on(app.discover());
 
     enable_raw_mode()?;

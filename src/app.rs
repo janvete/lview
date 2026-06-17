@@ -130,6 +130,7 @@ impl LogViewer {
 pub struct App {
     pub session: SshSession,
     pub config: Config,
+    pub runtime: tokio::runtime::Handle,
     pub logs: Vec<LogSource>,
     pub filtered_indices: Vec<usize>,
     pub selected_index: usize,
@@ -143,10 +144,11 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(session: SshSession, config: Config) -> Self {
+    pub fn new(session: SshSession, config: Config, runtime: tokio::runtime::Handle) -> Self {
         Self {
             session,
             config,
+            runtime,
             logs: Vec::new(),
             filtered_indices: Vec::new(),
             selected_index: 0,
@@ -232,7 +234,11 @@ impl App {
         let Some(source) = self.selected_log().cloned() else {
             return Ok(());
         };
-        let rx = start_stream(&self.session, &source, 1000)?;
+        let session = self.session.clone();
+        let stream_source = source.clone();
+        let rx = self.runtime.block_on(async move {
+            start_stream(&session, &stream_source, 1000)
+        })?;
         self.viewer = Some(LogViewer::new(source, rx, self.config.max_log_lines));
         self.screen = Screen::Viewer;
         self.message = None;
@@ -355,7 +361,8 @@ mod tests {
     #[test]
     fn test_app_filter() {
         let session = SshSession::new("ssh".into(), crate::ssh::SshTarget { args: vec!["host".into()] });
-        let mut app = App::new(session, Config::default());
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let mut app = App::new(session, Config::default(), rt.handle().clone());
         app.logs = vec![
             LogSource::File { path: "/var/log/syslog".into() },
             LogSource::File { path: "/opt/app/app.log".into() },
