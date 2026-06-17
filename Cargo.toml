@@ -1,0 +1,23 @@
+[package]
+name = "lview"
+version = "0.1.0"
+edition = "2024"
+authors = ["janvete"]
+description = "TUI for viewing remote logs over SSH"
+license = "MIT"
+repository = "https://github.com/janvete/lview"
+homepage = "https://github.com/janvete/lview"
+keywords = ["cli", "tui", "ssh", "logs", "docker"]
+categories = ["command-line-utilities"]
+
+[dependencies]
+chrono = "0.4.45"
+clap = { version = "4.6.1", features = ["derive"] }
+crossterm = "0.29.0"
+directories = "6.0.0"
+fuzzy-matcher = "0.3.7"
+ratatui = "0.30.1"
+regex = "1.11.1"
+serde = { version = "1.0.217", features = ["derive"] }
+tokio = { version = "1.43.0", features = ["rt-multi-thread", "process", "io-util", "sync", "time", "macros"] }
+toml = "0.8.20"
