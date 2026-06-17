@@ -36,8 +36,36 @@ impl LogSource {
         }
     }
 
+    /// Human-readable label shown in the log picker.
+    pub fn display_name(&self) -> String {
+        match self {
+            LogSource::File { path } => {
+                let basename = std::path::Path::new(path)
+                    .file_name()
+                    .map(|s| s.to_string_lossy().to_string())
+                    .unwrap_or_else(|| path.clone());
+                if let Some(parent) = std::path::Path::new(path).parent() {
+                    let parent_str = parent.to_string_lossy();
+                    if parent_str == "/var/log" {
+                        return format!("{} (system)", basename);
+                    } else if parent_str.starts_with("/var/log/") || parent_str.starts_with("/opt/") {
+                        return format!("{} ({})", basename, parent_str);
+                    }
+                }
+                format!("{} ({})", basename, path)
+            }
+            LogSource::Docker { container, image } => format!("{} (docker: {})", container, image),
+            LogSource::Journal { unit } => format!("{} (journal)", unit),
+        }
+    }
+
+    /// Text used for fuzzy searching (label + raw source).
+    pub fn search_text(&self) -> String {
+        format!("{} {}", self.display_name(), self)
+    }
+
     pub fn sort_key(&self) -> String {
-        format!("{}:{}", self.category(), self)
+        format!("{}:{}", self.category(), self.display_name())
     }
 }
 

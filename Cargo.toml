@@ -13,6 +13,7 @@ categories = ["command-line-utilities"]
 [dependencies]
 chrono = "0.4.45"
 clap = { version = "4.6.1", features = ["derive"] }
+ctrlc = "3.4.6"
 crossterm = "0.29.0"
 directories = "6.0.0"
 fuzzy-matcher = "0.3.7"

@@ -8,11 +8,12 @@ mod ssh;
 mod ui;
 
 use std::io;
+use std::sync::Arc;
 use std::time::Duration;
 
 use clap::{Parser, Subcommand};
 use crossterm::{
-    event::{DisableMouseCapture, EnableMouseCapture, poll, read},
+    event::{poll, read},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -48,6 +49,12 @@ enum Command {
     },
 }
 
+fn restore_terminal() {
+    let _ = disable_raw_mode();
+    let _ = execute!(io::stdout(), LeaveAlternateScreen);
+    let _ = execute!(io::stdout(), crossterm::event::DisableMouseCapture);
+}
+
 fn main() -> io::Result<()> {
     let args = Args::parse();
     let command = args.command.unwrap_or_else(|| {
@@ -74,30 +81,43 @@ fn main() -> io::Result<()> {
 
     enable_raw_mode()?;
     let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
+    execute!(stdout, EnterAlternateScreen)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    let result = run_app(&mut terminal, app, &rt);
+    // Ensure terminal is restored on panic or Ctrl-C
+    std::panic::set_hook(Box::new(|info| {
+        restore_terminal();
+        eprintln!("Panic: {}", info);
+    }));
+    let running = Arc::new(std::sync::atomic::AtomicBool::new(true));
+    let r = running.clone();
+    ctrlc::set_handler(move || {
+        r.store(false, std::sync::atomic::Ordering::SeqCst);
+    })
+    .expect("failed to set Ctrl-C handler");
+
+    let result = run_app(&mut terminal, app, &rt, running);
 
     disable_raw_mode()?;
-    execute!(
-        terminal.backend_mut(),
-        LeaveAlternateScreen,
-        DisableMouseCapture
-    )?;
+    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
     terminal.show_cursor()?;
 
     result
 }
 
-fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App, rt: &Runtime) -> io::Result<()>
+fn run_app<B: Backend>(
+    terminal: &mut Terminal<B>,
+    mut app: App,
+    rt: &Runtime,
+    running: Arc<std::sync::atomic::AtomicBool>,
+) -> io::Result<()>
 where
     io::Error: From<<B as Backend>::Error>,
 {
     let tick_rate = Duration::from_millis(100);
 
-    loop {
+    while running.load(std::sync::atomic::Ordering::SeqCst) {
         app.update_stream();
 
         if app.loading {
@@ -113,4 +133,5 @@ where
             }
         }
     }
+    Ok(())
 }

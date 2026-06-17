@@ -28,6 +28,7 @@ pub struct LogViewer {
     pub max_lines: usize,
     pub search: SearchState,
     pub search_cursor: Option<usize>,
+    pub error: Option<String>,
 }
 
 impl LogViewer {
@@ -41,6 +42,7 @@ impl LogViewer {
             max_lines,
             search: SearchState::default(),
             search_cursor: None,
+            error: None,
         }
     }
 
@@ -49,6 +51,10 @@ impl LogViewer {
     }
 
     pub fn push_line(&mut self, line: String) {
+        if let Some(err) = line.strip_prefix("STDERR:") {
+            self.error = Some(err.to_string());
+            return;
+        }
         if self.buffer.len() >= self.max_lines {
             self.buffer.pop_front();
             if self.scroll > 0 {
@@ -189,7 +195,7 @@ impl App {
                 .enumerate()
                 .filter_map(|(i, log)| {
                     self.matcher
-                        .fuzzy_match(&log.to_string(), &self.picker_filter)
+                        .fuzzy_match(&log.search_text(), &self.picker_filter)
                         .map(|score| (score, i))
                 })
                 .collect();
@@ -243,6 +249,9 @@ impl App {
         if let Some(viewer) = &mut self.viewer {
             while let Ok(line) = viewer.receiver.try_recv() {
                 viewer.push_line(line);
+            }
+            if let Some(err) = viewer.error.take() {
+                self.message = Some(format!("SSH error: {}", err));
             }
         }
     }

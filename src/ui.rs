@@ -75,7 +75,7 @@ fn draw_log_list(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
             } else {
                 Style::default()
             };
-            ListItem::new(format!("[{}] {}", log.category(), log)).style(style)
+            ListItem::new(format!("[{}] {}", log.category(), log.display_name())).style(style)
         })
         .collect();
 

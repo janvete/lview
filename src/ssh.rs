@@ -52,8 +52,10 @@ impl SshSession {
 
     fn base_cmd(&self) -> Command {
         let mut cmd = Command::new(&self.command);
-        // Non-interactive mode: do not prompt for host keys or passwords.
-        cmd.arg("-o").arg("BatchMode=yes");
+        // Avoid interactive prompts from ssh itself. Passphrase prompts from the
+        // SSH agent may still appear in the terminal, but password prompts are
+        // disabled and unknown host keys are accepted automatically.
+        cmd.arg("-o").arg("PasswordAuthentication=no");
         cmd.arg("-o").arg("StrictHostKeyChecking=accept-new");
         cmd.args(&self.target.args);
         cmd.stdin(Stdio::null());
@@ -104,20 +106,36 @@ impl SshSession {
         let mut cmd = self.base_cmd();
         cmd.arg("--").arg(remote_command);
         cmd.stdout(Stdio::piped());
-        cmd.stderr(Stdio::null());
+        cmd.stderr(Stdio::piped());
         cmd.kill_on_drop(true);
         cmd.spawn()
     }
 
     /// Spawn a remote command and return a channel of lines from stdout.
+    /// Lines coming from stderr are prefixed with `STDERR:` so the UI can
+    /// surface ssh errors without mixing them into the log output.
     pub fn stream_lines(&self, remote_command: &str) -> io::Result<mpsc::UnboundedReceiver<String>> {
         let mut child = self.spawn_stream(remote_command)?;
         let stdout = child.stdout.take().ok_or_else(|| {
             io::Error::other("failed to capture stdout")
         })?;
+        let stderr = child.stderr.take().ok_or_else(|| {
+            io::Error::other("failed to capture stderr")
+        })?;
 
         let (tx, rx) = mpsc::unbounded_channel();
         tokio::spawn(async move {
+            let tx_err = tx.clone();
+            tokio::spawn(async move {
+                let reader = BufReader::new(stderr);
+                let mut lines = reader.lines();
+                while let Ok(Some(line)) = lines.next_line().await {
+                    if tx_err.send(format!("STDERR:{}", line)).is_err() {
+                        break;
+                    }
+                }
+            });
+
             let reader = BufReader::new(stdout);
             let mut lines = reader.lines();
             while let Ok(Some(line)) = lines.next_line().await {
