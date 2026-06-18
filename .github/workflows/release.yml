@@ -1,0 +1,61 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo build --release
+      - run: cargo test --release
+      - run: cargo clippy --release -- -D warnings
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lview-macos
+          path: target/release/lview
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo install cargo-deb
+      - run: cargo build --release
+      - run: cargo test --release
+      - run: cargo clippy --release -- -D warnings
+      - run: cargo deb
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lview-linux
+          path: |
+            target/release/lview
+            target/debian/*.deb
+
+  release:
+    needs: [build-macos, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: lview-macos
+          path: artifacts/macos
+      - uses: actions/download-artifact@v4
+        with:
+          name: lview-linux
+          path: artifacts/linux
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/macos/lview
+            artifacts/linux/lview
+            artifacts/linux/*.deb
+          generate_release_notes: true

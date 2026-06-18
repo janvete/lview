@@ -11,6 +11,16 @@ brew tap janvete/tools
 brew install lview
 ```
 
+### Debian / Ubuntu (.deb)
+
+Stáhněte si nejnovější `.deb` z [GitHub Releases](https://github.com/janvete/lview/releases) a nainstalujte:
+
+```bash
+sudo apt install ./lview_*.deb
+# nebo
+sudo dpkg -i ./lview_*.deb
+```
+
 ### Ze zdroje
 
 ```bash

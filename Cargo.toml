@@ -22,3 +22,14 @@ regex = "1.11.1"
 serde = { version = "1.0.217", features = ["derive"] }
 tokio = { version = "1.43.0", features = ["rt-multi-thread", "process", "io-util", "sync", "time", "macros"] }
 toml = "0.8.20"
+
+[package.metadata.deb]
+maintainer = "janvete <jan.vete@example.com>"
+copyright = "2026, janvete"
+extended-description = "TUI application for viewing remote logs over SSH."
+section = "utils"
+priority = "optional"
+assets = [
+    ["target/release/lview", "usr/bin/lview", "755"],
+    ["README.md", "usr/share/doc/lview/README.md", "644"],
+]
