@@ -1,8 +1,8 @@
 # lview
 
-TUI pro prohlížení logů na vzdálených Linux strojích přes SSH. Automaticky detekuje systémové logy, Docker kontejnery, `/opt` aplikace a systemd journal.
+A TUI for viewing logs on remote Linux machines over SSH. It automatically detects system logs, Docker containers, `/opt` applications, and the systemd journal.
 
-## Instalace
+## Installation
 
 ### macOS (Homebrew)
 
@@ -13,56 +13,56 @@ brew install lview
 
 ### Debian / Ubuntu (.deb)
 
-Stáhněte si nejnovější `.deb` z [GitHub Releases](https://github.com/janvete/lview/releases) a nainstalujte:
+Download the latest `.deb` from [GitHub Releases](https://github.com/janvete/lview/releases) and install it:
 
 ```bash
 sudo apt install ./lview_*.deb
-# nebo
+# or
 sudo dpkg -i ./lview_*.deb
 ```
 
-### Ze zdroje
+### From source
 
 ```bash
 cargo install --git https://github.com/janvete/lview
 ```
 
-## Použití
+## Usage
 
 ```bash
 lview ssh -p22 root@192.168.53.3
 ```
 
-Všechny argumenty za `ssh` jsou předány přímo systémovému `ssh` příkazu, takže se použije vaše `~/.ssh/config`, SSH agent a klíče.
+All arguments after `ssh` are passed directly to the system `ssh` command, so your `~/.ssh/config`, SSH agent, and keys are used automatically.
 
-## Ovládání
+## Controls
 
-### Výběr logu
+### Log picker
 
-| Klávesa | Akce |
-|---------|------|
-| `j` / `k` nebo `↓` / `↑` | pohyb v seznamu |
-| `Enter` | otevřít vybraný log |
-| `/` | fuzzy filtrování seznamu logů |
-| `r` | znovu načíst seznam logů |
-| `q` | ukončit |
+| Key | Action |
+|-----|--------|
+| `j` / `k` or `↓` / `↑` | move through the list |
+| `Enter` | open the selected log |
+| `/` | fuzzy filter the log list |
+| `r` | reload the log list |
+| `q` | quit |
 
-### Prohlížeč logu
+### Log viewer
 
-| Klávesa | Akce |
-|---------|------|
-| `j` / `k` nebo `↓` / `↑` | scroll |
-| `Ctrl+d` / `Ctrl+u` | scroll o 10 řádků |
-| `g` / `G` | začátek / konec |
-| `l` nebo `mezerník` | zapnout/vypnout živý náhled |
-| `/` | vyhledávání v logu (regex, case-insensitive) |
-| `n` / `N` | další / předchozí výskyt |
-| `s` | uložit aktuální buffer do `/tmp` |
-| `q` nebo `Esc` | zpět do výběru |
+| Key | Action |
+|-----|--------|
+| `j` / `k` or `↓` / `↑` | scroll |
+| `Ctrl+d` / `Ctrl+u` | scroll by 10 lines |
+| `g` / `G` | jump to top / bottom |
+| `l` or `space` | toggle live preview |
+| `/` | search in the log (regex, case-insensitive) |
+| `n` / `N` | next / previous match |
+| `s` | save the current buffer to `/tmp` |
+| `q` or `Esc` | back to the picker |
 
-## Konfigurace
+## Configuration
 
-Vytvořte `~/.config/lview/config.toml`:
+Create `~/.config/lview/config.toml`:
 
 ```toml
 ssh_command = "ssh"
