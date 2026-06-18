@@ -60,3 +60,4 @@ jobs:
             artifacts/linux/lview
             artifacts/linux/*.deb
           generate_release_notes: true
+          allowUpdates: true
