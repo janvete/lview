@@ -1,8 +1,8 @@
 class Lview < Formula
   desc "TUI for viewing remote logs over SSH"
   homepage "https://github.com/janvete/lview"
-  url "https://github.com/janvete/lview/archive/refs/tags/v0.1.6.tar.gz"
-  sha256 "577b10aee2f5da89f724f03fea37f31135eff06f32cce0da0fd3756466902b7d"
+  url "https://github.com/janvete/lview/archive/refs/tags/v0.1.7.tar.gz"
+  sha256 "7bb92852698486571a5c31158f64b398d123d3c7ebb1982733c43e0e1c84209a"
   license "MIT"
   head "https://github.com/janvete/lview.git", branch: "master"
 
