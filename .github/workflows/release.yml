@@ -62,7 +62,7 @@ jobs:
           tag_name: ${{ github.event.inputs.tag || github.ref_name }}
           files: |
             artifacts/macos/lview
-            artifacts/linux/lview
-            artifacts/linux/*.deb
+            artifacts/linux/release/lview
+            artifacts/linux/debian/*.deb
           generate_release_notes: true
           overwrite_files: true
