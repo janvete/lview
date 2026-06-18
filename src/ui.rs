@@ -26,12 +26,7 @@ fn draw_picker(f: &mut Frame, app: &App) {
         ])
         .split(f.area());
 
-    let top = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(35), Constraint::Percentage(65)])
-        .split(chunks[0]);
-
-    draw_log_list(f, app, top[1]);
+    draw_log_list(f, app, chunks[0]);
     draw_preview(f, app, chunks[1]);
     draw_status(f, app, chunks[2]);
 
@@ -136,7 +131,11 @@ fn draw_log_buffer(f: &mut Frame, viewer: &LogViewer, area: ratatui::layout::Rec
             if is_match {
                 style = style.bg(Color::Yellow).fg(Color::Black);
             }
-            Line::from(Span::styled(line.as_str(), style))
+            let dot_color = log_level_color(line);
+            Line::from(vec![
+                Span::styled("● ", Style::default().fg(dot_color)),
+                Span::styled(line.as_str(), style),
+            ])
         })
         .collect();
 
@@ -213,4 +212,27 @@ fn default_block(title: &str) -> Block<'_> {
         .title(title)
         .borders(Borders::ALL)
         .border_style(Style::default().fg(Color::DarkGray))
+}
+
+/// Determine a color for the log-level indicator dot based on the line content.
+fn log_level_color(line: &str) -> Color {
+    let lower = line.to_lowercase();
+    if lower.contains("error")
+        || lower.contains("critical")
+        || lower.contains("fatal")
+        || lower.contains("panic")
+        || lower.contains("emergency")
+    {
+        Color::Red
+    } else if lower.contains("warn") || lower.contains("warning") {
+        Color::Yellow
+    } else if lower.contains("info") || lower.contains("notice") {
+        Color::Cyan
+    } else if lower.contains("debug") {
+        Color::Gray
+    } else if lower.contains("trace") {
+        Color::DarkGray
+    } else {
+        Color::White
+    }
 }
