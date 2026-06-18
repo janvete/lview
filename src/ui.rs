@@ -101,7 +101,16 @@ fn draw_preview(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
 }
 
 fn draw_log_buffer(f: &mut Frame, viewer: &LogViewer, area: ratatui::layout::Rect) {
-    let title = format!(" {} — {} ", viewer.source, if viewer.live { "LIVE" } else { "PAUSED" });
+    let live_style = if viewer.live {
+        Style::default().fg(Color::Green).add_modifier(Modifier::BOLD)
+    } else {
+        Style::default().fg(Color::Red).add_modifier(Modifier::BOLD)
+    };
+    let title = Line::from(vec![
+        Span::raw(format!(" {} — ", viewer.source)),
+        Span::styled(if viewer.live { "LIVE" } else { "PAUSED" }, live_style),
+        Span::raw(" "),
+    ]);
     let visible = viewer.visible_lines();
 
     // Compute the viewport offset so the current line stays in view.
@@ -140,7 +149,12 @@ fn draw_log_buffer(f: &mut Frame, viewer: &LogViewer, area: ratatui::layout::Rec
         .collect();
 
     let paragraph = Paragraph::new(Text::from(lines))
-        .block(default_block(&title))
+        .block(
+            Block::default()
+                .title(title)
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(Color::DarkGray)),
+        )
         .wrap(Wrap { trim: false })
         .scroll((scroll_offset as u16, 0));
     f.render_widget(paragraph, area);
@@ -165,17 +179,24 @@ fn draw_status(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
 
 fn draw_viewer_status(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
     let help = "j/k: scroll | g/G: top/bottom | l/Space: live | /: search | n/N: next/prev | s: save | q: back";
-    let text = match (&app.viewer, &app.message) {
-        (Some(v), None) => format!(
-            "{} | lines: {} | scroll: {} | {}",
-            if v.live { "LIVE" } else { "PAUSED" },
-            v.buffer.len(),
-            v.scroll,
-            help
-        ),
-        _ => help.to_string(),
+    let lines = match (&app.viewer, &app.message) {
+        (Some(v), None) => {
+            let live_style = if v.live {
+                Style::default().fg(Color::Green).add_modifier(Modifier::BOLD)
+            } else {
+                Style::default().fg(Color::Red).add_modifier(Modifier::BOLD)
+            };
+            Line::from(vec![
+                Span::styled(if v.live { "LIVE" } else { "PAUSED" }, live_style),
+                Span::styled(
+                    format!(" | lines: {} | scroll: {} | {}", v.buffer.len(), v.scroll, help),
+                    Style::default().fg(Color::Gray),
+                ),
+            ])
+        }
+        _ => Line::from(Span::styled(help, Style::default().fg(Color::Gray))),
     };
-    let paragraph = Paragraph::new(Text::from(text)).style(Style::default().fg(Color::Gray));
+    let paragraph = Paragraph::new(Text::from(lines));
     f.render_widget(paragraph, area);
 }
 
